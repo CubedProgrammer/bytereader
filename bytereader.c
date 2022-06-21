@@ -1,3 +1,12 @@
+// This file is part of /CubedProgrammer/bytereader.
+// Copyright (C) 2022, github.com/CubedProgrammer, owner of said account.
+
+// /CubedProgrammer/bytereader is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+// /CubedProgrammer/bytereader is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License along with /CubedProgrammer/bytereader. If not, see <https://www.gnu.org/licenses/>.
+
 #include<stdio.h>
 #include<stdlib.h>
 #define ALTERNATE_COLOURS 01
@@ -7,16 +16,19 @@ unsigned readbytes(const char *fname, int bpl, short mode, long unsigned off, lo
 {
     // up to 256 bytes per line
     char unsigned cbuf[256];
-    unsigned rd = 0, tmp;
+    unsigned rd = 0, tmp = 0;
     char y = 0;
     FILE *fh = fopen(fname, "rb");
-    fseek(fh, off, SEEK_SET);
-    tmp = fread(cbuf, 1, bpl, fh);
-    while(tmp)
+    if(fh != NULL)
+    {
+        fseek(fh, off, SEEK_SET);
+        tmp = fread(cbuf, 1, bpl, fh);
+    }
+    while(tmp && rd < len)
     {
         if(MASK_NUM(mode, OFFSET))
             printf("%08x: ", rd);
-        for(int j = 0; j < tmp; j++)
+        for(int j = 0; rd + j < len && j < tmp; j++)
         {
             if(MASK_NUM(mode, ALTERNATE_COLOURS))
             {
@@ -35,7 +47,8 @@ unsigned readbytes(const char *fname, int bpl, short mode, long unsigned off, lo
         rd += tmp;
         tmp = fread(cbuf, 1, bpl, fh);
     }
-    fclose(fh);
+    if(fh)
+        fclose(fh);
     return rd;
 }
 int main(int argl, char *argv[])
@@ -45,6 +58,16 @@ int main(int argl, char *argv[])
     short mode = 0;
     long unsigned off = 0, len = 0xffffffff;
     unsigned cols = 64;
+    if(argl == 1)
+    {
+        printf("%s version 1.0\n", *argv);
+        puts("Specify files to be read, bytes will be printed in hexadecimal.\n\nCommand line options...");
+        puts("-a to alternate colours for each byte, easier to read.");
+        puts("-b to set the offset, let n be the next argument, the first n bytes will be skipped.");
+        puts("-c to set the number of bytes per row.");
+        puts("-l to set the maximum number of bytes read to the next argument.");
+        puts("-n to display byte offset of each row.");
+    }
     for(int i = 1; i < argl; ++i)
     {
         arg = argv[i];
@@ -56,6 +79,9 @@ int main(int argl, char *argv[])
                 {
                     case'n':
                         mode |= OFFSET;
+                        break;
+                    case'l':
+                        argtype = 3;
                         break;
                     case'c':
                         argtype = 1;
@@ -75,6 +101,9 @@ int main(int argl, char *argv[])
         {
             switch(argtype)
             {
+                case 3:
+                    len = strtoul(arg, NULL, 10);
+                    break;
                 case 2:
                     off = strtoul(arg, NULL, 10);
                     break;
@@ -82,7 +111,7 @@ int main(int argl, char *argv[])
                     cols = strtoul(arg, NULL, 10);
                     break;
                 default:
-                    printf("%s has %u bytes.\n", arg, readbytes(arg, cols, mode, off, len));
+                    printf("%s has %lu bytes.\n", arg, off + readbytes(arg, cols, mode, off, len));
             }
             argtype = 0;
         }
