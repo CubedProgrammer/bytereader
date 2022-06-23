@@ -7,11 +7,15 @@
 
 // You should have received a copy of the GNU General Public License along with /CubedProgrammer/bytereader. If not, see <https://www.gnu.org/licenses/>.
 
+#include<ctype.h>
 #include<stdio.h>
 #include<stdlib.h>
+#include<string.h>
+#include"bytefind.h"
 #define ALTERNATE_COLOURS 01
 #define OFFSET 02
 #define MASK_NUM(n, m)((n) & (m))
+
 unsigned readbytes(const char *fname, int bpl, short mode, long unsigned off, long unsigned len)
 {
     // up to 256 bytes per line
@@ -51,20 +55,33 @@ unsigned readbytes(const char *fname, int bpl, short mode, long unsigned off, lo
         fclose(fh);
     return rd;
 }
+int chrnum(char c)
+{
+    c = tolower(c);
+    int d = 0;
+    if(c >= '0' && c <= '9')
+        d = c - '0';
+    else if(c >= 'a' && c <= 'f')
+        d = c - 'a' + 10;
+    return d;
+}
 int main(int argl, char *argv[])
 {
     char const *arg;
-    char argtype = 0;
+    char searchbuf[90];
+    size_t searchlen;
+    char argtype = 0, search = 0;
     short mode = 0;
     long unsigned off = 0, len = 0xffffffff;
     unsigned cols = 64;
     if(argl == 1)
     {
-        printf("%s version 1.0\n", *argv);
+        printf("%s version 1.1\n", *argv);
         puts("Specify files to be read, bytes will be printed in hexadecimal.\n\nCommand line options...");
         puts("-a to alternate colours for each byte, easier to read.");
         puts("-b to set the offset, let n be the next argument, the first n bytes will be skipped.");
         puts("-c to set the number of bytes per row.");
+        puts("-f to search for a sequence of bytes, bytes must be given in hexadecimal.");
         puts("-l to set the maximum number of bytes read to the next argument.");
         puts("-n to display byte offset of each row.");
     }
@@ -83,6 +100,9 @@ int main(int argl, char *argv[])
                     case'l':
                         argtype = 3;
                         break;
+                    case'f':
+                        search = 1;
+                        break;
                     case'c':
                         argtype = 1;
                         break;
@@ -96,6 +116,15 @@ int main(int argl, char *argv[])
                         fprintf(stderr, "\033\13331mUnrecognized option: -%c\033\133m\n", *it);
                 }
             }
+        }
+        else if(search == 1)
+        {
+            searchlen = strlen(arg);
+            for(size_t i = 0; i < searchlen; i += 2)
+                searchbuf[i >> 1] = chrnum(arg[i]) * 16 + chrnum(arg[i + 1]);
+            ++searchlen;
+            searchlen >>= 1;
+            search = 2;
         }
         else
         {
@@ -111,7 +140,10 @@ int main(int argl, char *argv[])
                     cols = strtoul(arg, NULL, 10);
                     break;
                 default:
-                    printf("%s has %lu bytes.\n", arg, off + readbytes(arg, cols, mode, off, len));
+                    if(search)
+                        bytefind(arg, searchbuf, searchlen);
+                    else
+                        printf("%s has %lu bytes.\n", arg, off + readbytes(arg, cols, mode, off, len));
             }
             argtype = 0;
         }
