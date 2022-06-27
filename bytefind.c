@@ -8,9 +8,10 @@
 // You should have received a copy of the GNU General Public License along with /CubedProgrammer/bytereader. If not, see <https://www.gnu.org/licenses/>. 
 
 #include<stdio.h>
-void bytefind(const char *fname, const char *bytes, size_t size)
+int bytefind(const char *fname, const char *bytes, size_t size)
 {
-    FILE *fh = fopen(fname, "r");
+    FILE *fh = fopen(fname, "rb");
+    int succ = 0;
     if(fh != NULL)
     {
         printf("Searching %s...\n", fname);
@@ -46,5 +47,63 @@ void bytefind(const char *fname, const char *bytes, size_t size)
         fclose(fh);
     }
     else
-        printf("File %s could not be read.\n", fname);
+        printf("File %s could not be read.\n", fname), succ = -1;
+    return succ;
+}
+
+int bytereplace(const char *fname, const char *search, const char *replace, size_t size)
+{
+    int succ = 0;
+    FILE *fh = fopen(fname, "rb+");
+    if(fh != NULL)
+    {
+        printf("Searching %s...\n", fname);
+        char cbuf[16384];
+        size_t ind = 0, bc, before = 0;
+        long pos, oldpos;
+        char eq;
+        while(!feof(fh))
+        {
+            bc = fread(cbuf, 1, sizeof(cbuf), fh);
+            if(ind)
+            {
+                eq = 1;
+                for(size_t j = ind; eq && j < size; ++j)
+                    eq = search[j] == cbuf[j - ind];
+                if(eq)
+                {
+                    pos = before - ind;
+                    oldpos = ftell(fh);
+                    fseek(fh, pos, SEEK_SET);
+                    fwrite(replace, 1, size, fh);
+                    fseek(fh, oldpos, SEEK_SET);
+                }
+                ind = 0;
+            }
+            for(size_t i = 0; i < bc; ++i)
+            {
+                eq = 1;
+                for(size_t j = 0; eq && j < size; ++j)
+                {
+                    eq = search[j] == cbuf[i + j];
+                    if(eq && i + j == bc - 1)
+                        ind = j + 1, eq = 0;
+                }
+                if(eq)
+                {
+                    pos = i + before;
+                    oldpos = ftell(fh);
+                    fseek(fh, pos, SEEK_SET);
+                    fwrite(replace, 1, size, fh);
+                    fseek(fh, oldpos, SEEK_SET);
+                    i += size - 1;
+                }
+            }
+            before += bc;
+        }
+        fclose(fh);
+    }
+    else
+        succ = -1, printf("\033\13331mFile %s could not be opened.\033\133m\n", fname);
+    return succ;
 }

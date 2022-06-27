@@ -11,7 +11,9 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#ifdef BYTEREADER_SEARCH_REPLACE
 #include"bytefind.h"
+#endif
 #define ALTERNATE_COLOURS 01
 #define OFFSET 02
 #define MASK_NUM(n, m)((n) & (m))
@@ -68,15 +70,16 @@ int chrnum(char c)
 int main(int argl, char *argv[])
 {
     char const *arg;
-    char searchbuf[90];
-    size_t searchlen;
+    char searchbuf[90], replbuf[90];
+    size_t searchlen, repllen;
     char argtype = 0, search = 0;
     short mode = 0;
     long unsigned off = 0, len = 0xffffffff;
     unsigned cols = 64;
+    int succ = 0;
     if(argl == 1)
     {
-        printf("%s version 1.1\n", *argv);
+        printf("%s version 1.2\n", *argv);
         puts("Specify files to be read, bytes will be printed in hexadecimal.\n\nCommand line options...");
         puts("-a to alternate colours for each byte, easier to read.");
         puts("-b to set the offset, let n be the next argument, the first n bytes will be skipped.");
@@ -84,6 +87,7 @@ int main(int argl, char *argv[])
         puts("-f to search for a sequence of bytes, bytes must be given in hexadecimal.");
         puts("-l to set the maximum number of bytes read to the next argument.");
         puts("-n to display byte offset of each row.");
+        puts("-r to do a search and replace, next two arguments will be the bytes to search for, and to replace.");
     }
     for(int i = 1; i < argl; ++i)
     {
@@ -94,15 +98,22 @@ int main(int argl, char *argv[])
             {
                 switch(*it)
                 {
+#ifdef BYTEREADER_SEARCH_REPLACE
+                    case'r':
+                        search = 3;
+                        break;
+#endif
                     case'n':
                         mode |= OFFSET;
                         break;
                     case'l':
                         argtype = 3;
                         break;
+#ifdef BYTEREADER_SEARCH_REPLACE
                     case'f':
                         search = 1;
                         break;
+#endif
                     case'c':
                         argtype = 1;
                         break;
@@ -113,20 +124,33 @@ int main(int argl, char *argv[])
                         mode |= ALTERNATE_COLOURS;
                         break;
                     default:
+                        succ = 1;
                         fprintf(stderr, "\033\13331mUnrecognized option: -%c\033\133m\n", *it);
                 }
             }
         }
-        else if(search == 1)
+        else 
+#ifdef BYTEREADER_SEARCH_REPLACE
+        if(search & 1)
         {
             searchlen = strlen(arg);
             for(size_t i = 0; i < searchlen; i += 2)
                 searchbuf[i >> 1] = chrnum(arg[i]) * 16 + chrnum(arg[i + 1]);
             ++searchlen;
             searchlen >>= 1;
-            search = 2;
+            ++search;
+        }
+        else if(search == 4)
+        {
+            repllen = strlen(arg);
+            for(size_t i = 0; i < repllen; i += 2)
+                replbuf[i >> 1] = chrnum(arg[i]) * 16 + chrnum(arg[i + 1]);
+            ++repllen;
+            repllen >>= 1;
+            search += 2;
         }
         else
+#endif
         {
             switch(argtype)
             {
@@ -140,9 +164,24 @@ int main(int argl, char *argv[])
                     cols = strtoul(arg, NULL, 10);
                     break;
                 default:
+#ifdef BYTEREADER_SEARCH_REPLACE
                     if(search)
-                        bytefind(arg, searchbuf, searchlen);
+                    {
+                        if(search == 6)
+                        {
+                            if(repllen < searchlen)
+                            {
+                                succ = 1;
+                                puts("\033\13331mBytes to replace must be the same length as bytes to search.\033\133m");
+                            }
+                            else
+                                succ = bytereplace(arg, searchbuf, replbuf, searchlen);
+                        }
+                        else
+                            succ = bytefind(arg, searchbuf, searchlen);
+                    }
                     else
+#endif
                         printf("%s has %lu bytes.\n", arg, off + readbytes(arg, cols, mode, off, len));
             }
             argtype = 0;
