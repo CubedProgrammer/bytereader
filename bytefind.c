@@ -16,7 +16,8 @@ int bytefind(const char *fname, const char *bytes, size_t size)
     {
         printf("Searching %s...\n", fname);
         char cbuf[16384];
-        size_t ind = 0, bc, before = 0;
+        size_t ind = 0, bc;
+        size_t before = 0, start = 0;
         char eq;
         while(!feof(fh))
         {
@@ -27,10 +28,10 @@ int bytefind(const char *fname, const char *bytes, size_t size)
                 for(size_t j = ind; eq && j < size; ++j)
                     eq = bytes[j] == cbuf[j - ind];
                 if(eq)
-                    printf("bytes found at position 0x%08lx.\n", before - ind);
+                    printf("bytes found at position 0x%08lx.\n", before - ind), start = before - ind + size;
                 ind = 0;
             }
-            for(size_t i = 0; i < bc; ++i)
+            for(size_t i = start; i < bc; ++i)
             {
                 eq = 1;
                 for(size_t j = 0; eq && j < size; ++j)
@@ -42,6 +43,7 @@ int bytefind(const char *fname, const char *bytes, size_t size)
                 if(eq)
                     printf("bytes found at position 0x%08lx.\n", i + before), i += size - 1;
             }
+            start = 0;
             before += bc;
         }
         fclose(fh);
@@ -59,7 +61,8 @@ int bytereplace(const char *fname, const char *search, const char *replace, size
     {
         printf("Searching %s...\n", fname);
         char cbuf[16384];
-        size_t ind = 0, bc, before = 0;
+        size_t ind = 0, bc;
+        size_t before = 0, start = 0;
         long pos, oldpos;
         char eq;
         while(!feof(fh))
@@ -73,6 +76,7 @@ int bytereplace(const char *fname, const char *search, const char *replace, size
                 if(eq)
                 {
                     pos = before - ind;
+                    start = pos + size;
                     oldpos = ftell(fh);
                     fseek(fh, pos, SEEK_SET);
                     fwrite(replace, 1, size, fh);
@@ -80,7 +84,7 @@ int bytereplace(const char *fname, const char *search, const char *replace, size
                 }
                 ind = 0;
             }
-            for(size_t i = 0; i < bc; ++i)
+            for(size_t i = start; i < bc; ++i)
             {
                 eq = 1;
                 for(size_t j = 0; eq && j < size; ++j)
@@ -99,6 +103,7 @@ int bytereplace(const char *fname, const char *search, const char *replace, size
                     i += size - 1;
                 }
             }
+            start = 0;
             before += bc;
         }
         fclose(fh);
