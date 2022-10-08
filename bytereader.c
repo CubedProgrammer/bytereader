@@ -11,12 +11,14 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<unistd.h>
 #ifdef BYTEREADER_SEARCH_REPLACE
 #include"bytefind.h"
 #endif
 #define ALTERNATE_COLOURS 01
 #define OFFSET 02
 #define MASK_NUM(n, m)((n) & (m))
+#define ISINTERACTIVE isatty(STDOUT_FILENO)
 
 unsigned readbytes(const char *fname, int bpl, short mode, long unsigned off, long unsigned len)
 {
@@ -32,11 +34,11 @@ unsigned readbytes(const char *fname, int bpl, short mode, long unsigned off, lo
     }
     while(tmp && rd < len)
     {
-        if(MASK_NUM(mode, OFFSET))
+        if(ISINTERACTIVE && MASK_NUM(mode, OFFSET))
             printf("%08x: ", rd);
         for(int j = 0; rd + j < len && j < tmp; j++)
         {
-            if(MASK_NUM(mode, ALTERNATE_COLOURS))
+            if(ISINTERACTIVE && MASK_NUM(mode, ALTERNATE_COLOURS))
             {
                 y = !y;
                 if(y)
@@ -49,7 +51,8 @@ unsigned readbytes(const char *fname, int bpl, short mode, long unsigned off, lo
             else
                 printf("%x", cbuf[j]);
         }
-        puts("\033\133m");
+        if(ISINTERACTIVE)
+            puts("\033\133m");
         rd += tmp;
         tmp = fread(cbuf, 1, bpl, fh);
     }
@@ -77,6 +80,8 @@ int main(int argl, char *argv[])
     long unsigned off = 0, len = 0xffffffff;
     unsigned cols = 64;
     int succ = 0;
+    if(ISINTERACTIVE == 0)
+        puts("gay");
     if(argl == 1)
     {
         printf("%s version 1.3\n", *argv);
@@ -182,7 +187,10 @@ int main(int argl, char *argv[])
                     }
                     else
 #endif
-                        printf("%s has %lu bytes.\n", arg, off + readbytes(arg, cols, mode, off, len));
+                        if(ISINTERACTIVE)
+                            printf("%s has %lu bytes.\n", arg, off + readbytes(arg, cols, mode, off, len));
+                        else
+                            readbytes(arg, cols, mode, off, len);
             }
             argtype = 0;
         }

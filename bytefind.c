@@ -8,10 +8,13 @@
 // You should have received a copy of the GNU General Public License along with /CubedProgrammer/bytereader. If not, see <https://www.gnu.org/licenses/>. 
 
 #include<stdio.h>
+#include<unistd.h>
+#define ISINTERACTIVE isatty(STDOUT_FILENO)
 int bytefind(const char *fname, const char *bytes, size_t size)
 {
     FILE *fh = fopen(fname, "rb");
     int succ = 0;
+    char realdev = ISINTERACTIVE;
     if(fh != NULL)
     {
         printf("Searching %s...\n", fname);
@@ -22,13 +25,30 @@ int bytefind(const char *fname, const char *bytes, size_t size)
         while(!feof(fh))
         {
             bc = fread(cbuf, 1, sizeof(cbuf), fh);
+            start = 0;
             if(ind)
             {
                 eq = 1;
                 for(size_t j = ind; eq && j < size; ++j)
                     eq = bytes[j] == cbuf[j - ind];
                 if(eq)
-                    printf("bytes found at position 0x%08lx.\n", before - ind), start = before - ind + size;
+                {
+                    if(realdev)
+                    {
+                        fputs("\033\13332m", stdout);
+                        for(size_t j = 0; eq && j < size; ++j)
+                            printf("%02x", cbuf[j - ind]);
+                        fputs("\033\133m", stdout);
+                    }
+                    else
+                        printf("%08lx.\n", before - ind);
+                    start = before - ind + size;
+                }
+                else if(realdev)
+                {
+                    for(size_t j = ind; j < size; ++j)
+                        printf("%02x", cbuf[j - ind]);
+                }
                 ind = 0;
             }
             for(size_t i = start; i < bc; ++i)
@@ -41,7 +61,20 @@ int bytefind(const char *fname, const char *bytes, size_t size)
                         ind = j + 1, eq = 0;
                 }
                 if(eq)
-                    printf("bytes found at position 0x%08lx.\n", i + before), i += size - 1;
+                {
+                    if(realdev)
+                    {
+                        fputs("\033\13332m", stdout);
+                        for(size_t j = 0; eq && j < size; ++j)
+                            printf("%02x", cbuf[i + j]);
+                        fputs("\033\133m", stdout);
+                    }
+                    else
+                        printf("%08lx.\n", i + before);
+                    i += size - 1;
+                }
+                else if(ind == 0&& realdev)
+                    printf("%02x", cbuf[i]);
             }
             start = 0;
             before += bc;
