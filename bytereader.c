@@ -84,7 +84,7 @@ int main(int argl, char *argv[])
         puts("gay");
     if(argl == 1)
     {
-        printf("%s version 1.3\n", *argv);
+        printf("%s version 1.4\n", *argv);
         puts("Specify files to be read, bytes will be printed in hexadecimal.\n\nCommand line options...");
         puts("-a to alternate colours for each byte, easier to read.");
         puts("-b to set the offset, let n be the next argument, the first n bytes will be skipped.");
@@ -183,7 +183,7 @@ int main(int argl, char *argv[])
                                 succ = bytereplace(arg, searchbuf, replbuf, searchlen);
                         }
                         else
-                            succ = bytefind(arg, searchbuf, searchlen);
+                            succ = bytefind(arg, cols, searchbuf, searchlen);
                     }
                     else
 #endif
