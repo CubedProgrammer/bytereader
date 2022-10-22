@@ -84,7 +84,7 @@ int main(int argl, char *argv[])
         puts("gay");
     if(argl == 1)
     {
-        printf("%s version 1.4\n", *argv);
+        printf("%s version 1.5\n", *argv);
         puts("Specify files to be read, bytes will be printed in hexadecimal.\n\nCommand line options...");
         puts("-a to alternate colours for each byte, easier to read.");
         puts("-b to set the offset, let n be the next argument, the first n bytes will be skipped.");
@@ -93,6 +93,7 @@ int main(int argl, char *argv[])
         puts("-l to set the maximum number of bytes read to the next argument.");
         puts("-n to display byte offset of each row.");
         puts("-r to do a search and replace, next two arguments will be the bytes to search for, and to replace.");
+        puts("Make the replace argument + to erase all occurrences of the sequence of bytes with -r.");
     }
     for(int i = 1; i < argl; ++i)
     {
@@ -148,10 +149,15 @@ int main(int argl, char *argv[])
         else if(search == 4)
         {
             repllen = strlen(arg);
-            for(size_t i = 0; i < repllen; i += 2)
-                replbuf[i >> 1] = chrnum(arg[i]) * 16 + chrnum(arg[i + 1]);
-            ++repllen;
-            repllen >>= 1;
+            if((repllen & 1) == 1)
+                repllen = 0;
+            else
+            {
+                for(size_t i = 0; i < repllen; i += 2)
+                    replbuf[i >> 1] = chrnum(arg[i]) * 16 + chrnum(arg[i + 1]);
+                ++repllen;
+                repllen >>= 1;
+            }
             search += 2;
         }
         else
@@ -173,15 +179,7 @@ int main(int argl, char *argv[])
                     if(search)
                     {
                         if(search == 6)
-                        {
-                            if(repllen < searchlen)
-                            {
-                                succ = 1;
-                                puts("\033\13331mBytes to replace must be the same length as bytes to search.\033\133m");
-                            }
-                            else
-                                succ = bytereplace(arg, searchbuf, replbuf, searchlen);
-                        }
+                            succ = bytereplace(arg, searchbuf, replbuf, searchlen, repllen);
                         else
                             succ = bytefind(arg, cols, searchbuf, searchlen);
                     }

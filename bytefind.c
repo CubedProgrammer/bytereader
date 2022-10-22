@@ -77,16 +77,6 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size)
                             currcol = 0;
                         }
                     }
-                    for(size_t j = ind; j < size; ++j)
-                    {
-                        printf("%02x", cbuf[j - ind]);
-                        ++currcol;
-                        if(currcol == cols)
-                        {
-                            putchar('\n');
-                            currcol = 0;
-                        }
-                    }
                 }
                 ind = 0;
             }
@@ -135,19 +125,29 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size)
             before += bc;
         }
         fclose(fh);
+        if(currcol != cols)
+            putchar('\n');
     }
     else
         printf("File %s could not be read.\n", fname), succ = -1;
     return succ;
 }
 
-int bytereplace(const char *fname, const char *search, const char *replace, size_t size)
+int bytereplace(const char *fname, const char *search, const char *replace, size_t ssize, size_t rsize)
 {
     int succ = 0;
-    FILE *fh = fopen(fname, "rb+");
+    FILE *fh = fopen(fname, "rb+"), *ofh;
+    char tmpname[60];
+    char realdev = ISINTERACTIVE;
+    if(ssize == rsize)
+        ofh = fh;
+    else
+    {
+        sprintf(tmpname, "bytereader-tmp-%d", getpid());
+        ofh = fopen(tmpname, "wb");
+    }
     if(fh != NULL)
     {
-        printf("Searching %s...\n", fname);
         char cbuf[FINDBUFSZ];
         size_t ind = 0, bc;
         size_t before = 0, start = 0;
@@ -156,26 +156,33 @@ int bytereplace(const char *fname, const char *search, const char *replace, size
         while(!feof(fh))
         {
             bc = fread(cbuf, 1, sizeof(cbuf), fh);
+            start = 0;
             if(ind)
             {
                 eq = 1;
-                for(size_t j = ind; eq && j < size; ++j)
+                for(size_t j = ind; eq && j < ssize; ++j)
                     eq = search[j] == cbuf[j - ind];
                 if(eq)
                 {
                     pos = before - ind;
-                    start = pos + size;
-                    oldpos = ftell(fh);
-                    fseek(fh, pos, SEEK_SET);
-                    fwrite(replace, 1, size, fh);
-                    fseek(fh, oldpos, SEEK_SET);
+                    if(ofh == fh)
+                    {
+                        oldpos = ftell(fh);
+                        fseek(fh, pos, SEEK_SET);
+                    }
+                    fwrite(replace, 1, rsize, ofh);
+                    if(ofh == fh)
+                        fseek(fh, oldpos, SEEK_SET);
+                    start = ssize - ind;
                 }
+                else if(ofh != fh)
+                    fwrite(search, 1, ind, ofh);
                 ind = 0;
             }
             for(size_t i = start; i < bc; ++i)
             {
                 eq = 1;
-                for(size_t j = 0; eq && j < size; ++j)
+                for(size_t j = 0; eq && j < ssize; ++j)
                 {
                     eq = search[j] == cbuf[i + j];
                     if(eq && i + j == bc - 1)
@@ -184,17 +191,28 @@ int bytereplace(const char *fname, const char *search, const char *replace, size
                 if(eq)
                 {
                     pos = i + before;
-                    oldpos = ftell(fh);
-                    fseek(fh, pos, SEEK_SET);
-                    fwrite(replace, 1, size, fh);
-                    fseek(fh, oldpos, SEEK_SET);
-                    i += size - 1;
+                    if(ofh == fh)
+                    {
+                        oldpos = ftell(fh);
+                        fseek(fh, pos, SEEK_SET);
+                    }
+                    fwrite(replace, 1, rsize, ofh);
+                    if(ofh == fh)
+                        fseek(fh, oldpos, SEEK_SET);
+                    i += ssize - 1;
                 }
+                else if(ofh != fh && ind == 0)
+                    fputc(cbuf[i], ofh);
             }
-            start = 0;
             before += bc;
         }
         fclose(fh);
+        if(ssize != rsize)
+        {
+            fclose(ofh);
+            if(rename(tmpname, fname) != 0)
+                perror("Moving temporary file failed");
+        }
     }
     else
         succ = -1, printf("\033\13331mFile %s could not be opened.\033\133m\n", fname);

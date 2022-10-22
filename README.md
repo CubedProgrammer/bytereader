@@ -13,3 +13,25 @@ Files to compile:
 bytefind.c
 ```
 Remember that bytereader.c will always be necessary.
+## Compilation
+Full compilation
+```
+clang -O3 -std=c99 -c -DBYTEREADER_SEARCH_REPLACE bytefind.c bytereader.c
+clang -o bytereader bytefind.o bytereader.o
+```
+Minimal compilaion
+```
+clang -O3 -std=c99 -c bytereader.c
+clang -o bytereader bytereader.o
+```
+## Installation
+Move the compiled file into a directory in the $PATH
+```
+mv bytereader /usr/local/bin
+```
+Add aliases to shell, put these lines at the end of your ~/.bashrc, ~/.zshrc, or whichever shell you prefer.
+```sh
+alias bread='bytereader -a'
+alias bfind='bytereader -f'
+alias brepl='bytereader -r'
+```
