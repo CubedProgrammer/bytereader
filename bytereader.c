@@ -80,11 +80,9 @@ int main(int argl, char *argv[])
     long unsigned off = 0, len = 0xffffffff;
     unsigned cols = 64;
     int succ = 0;
-    if(ISINTERACTIVE == 0)
-        puts("gay");
     if(argl == 1)
     {
-        printf("%s version 1.5\n", *argv);
+        printf("%s version 1.5.1\n", *argv);
         puts("Specify files to be read, bytes will be printed in hexadecimal.\n\nCommand line options...");
         puts("-a to alternate colours for each byte, easier to read.");
         puts("-b to set the offset, let n be the next argument, the first n bytes will be skipped.");
@@ -94,6 +92,7 @@ int main(int argl, char *argv[])
         puts("-n to display byte offset of each row.");
         puts("-r to do a search and replace, next two arguments will be the bytes to search for, and to replace.");
         puts("Make the replace argument + to erase all occurrences of the sequence of bytes with -r.");
+        puts("Output will differ based on if stdout is attached to a real terminal.");
     }
     for(int i = 1; i < argl; ++i)
     {

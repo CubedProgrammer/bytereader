@@ -29,6 +29,9 @@ Move the compiled file into a directory in the $PATH
 ```
 mv bytereader /usr/local/bin
 ```
+If you're not running as root, you may not have permission to run the above command.
+If your user account is allowed to, put `sudo` or `doas` in front of the command to elevate privilage.
+
 Add aliases to shell, put these lines at the end of your ~/.bashrc, ~/.zshrc, or whichever shell you prefer.
 ```sh
 alias bread='bytereader -a'

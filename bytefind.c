@@ -20,11 +20,12 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size)
     char realdev = ISINTERACTIVE;
     if(fh != NULL)
     {
-        printf("Searching %s...\n", fname);
         char cbuf[FINDBUFSZ];
         size_t ind = 0, bc;
         size_t before = 0, start = 0, currcol = 0;
         char eq;
+        if(realdev)
+            printf("Searching %s...\n", fname);
         while(!feof(fh))
         {
             bc = fread(cbuf, 1, sizeof(cbuf), fh);
@@ -62,7 +63,7 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size)
                         fputs("\033\133m", stdout);
                     }
                     else
-                        printf("%08lx.\n", before - ind);
+                        printf("%08lx\n", before - ind);
                     start = size - ind;
                 }
                 else if(realdev)
@@ -107,7 +108,7 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size)
                         fputs("\033\133m", stdout);
                     }
                     else
-                        printf("%08lx.\n", i + before);
+                        printf("%08lx\n", i + before);
                     i += size - 1;
                 }
                 else if(ind == 0 && realdev)
