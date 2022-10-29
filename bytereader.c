@@ -17,6 +17,7 @@
 #endif
 #define ALTERNATE_COLOURS 01
 #define OFFSET 02
+#define SPACE_BYTES 04
 #define MASK_NUM(n, m)((n) & (m))
 #define ISINTERACTIVE isatty(STDOUT_FILENO)
 
@@ -50,6 +51,8 @@ unsigned readbytes(const char *fname, int bpl, short mode, long unsigned off, lo
                 printf("0%x", cbuf[j]);
             else
                 printf("%x", cbuf[j]);
+            if(!(rd + j + 1 == len || j + 1 == tmp) && MASK_NUM(mode, SPACE_BYTES))
+                putchar(' ');
         }
         if(ISINTERACTIVE)
             puts("\033\133m");
@@ -82,11 +85,12 @@ int main(int argl, char *argv[])
     int succ = 0;
     if(argl == 1)
     {
-        printf("%s version 1.5.1\n", *argv);
+        printf("%s version 1.6\n", *argv);
         puts("Specify files to be read, bytes will be printed in hexadecimal.\n\nCommand line options...");
         puts("-a to alternate colours for each byte, easier to read.");
         puts("-b to set the offset, let n be the next argument, the first n bytes will be skipped.");
         puts("-c to set the number of bytes per row.");
+        puts("-d to put a space between each byte.");
         puts("-f to search for a sequence of bytes, bytes must be given in hexadecimal.");
         puts("-l to set the maximum number of bytes read to the next argument.");
         puts("-n to display byte offset of each row.");
@@ -119,6 +123,9 @@ int main(int argl, char *argv[])
                         search = 1;
                         break;
 #endif
+                    case'd':
+                        mode |= SPACE_BYTES;
+                        break;
                     case'c':
                         argtype = 1;
                         break;
