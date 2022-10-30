@@ -8,6 +8,7 @@
 // You should have received a copy of the GNU General Public License along with /CubedProgrammer/bytereader. If not, see <https://www.gnu.org/licenses/>. 
 
 #include<stdio.h>
+#include<sys/stat.h>
 #include<unistd.h>
 #ifndef FINDBUFSZ
 #define FINDBUFSZ 16384
@@ -140,6 +141,7 @@ int bytereplace(const char *fname, const char *search, const char *replace, size
     FILE *fh = fopen(fname, "rb+"), *ofh;
     char tmpname[60];
     char realdev = ISINTERACTIVE;
+    struct stat fdat;
     if(ssize == rsize)
         ofh = fh;
     else
@@ -211,8 +213,11 @@ int bytereplace(const char *fname, const char *search, const char *replace, size
         if(ssize != rsize)
         {
             fclose(ofh);
+            stat(fname, &fdat);
             if(rename(tmpname, fname) != 0)
                 perror("Moving temporary file failed");
+            else if(chmod(fname, fdat.st_mode) != 0)
+                perror("chmod failed");
         }
     }
     else
