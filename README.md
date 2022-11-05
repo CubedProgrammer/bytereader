@@ -14,6 +14,8 @@ bytefind.c
 ```
 Remember that bytereader.c will always be necessary.
 ## Compilation
+Swap out clang with gcc or something else if that is your preferred compiler.
+
 Full compilation
 ```
 clang -O3 -std=c99 -c -DBYTEREADER_SEARCH_REPLACE bytefind.c bytereader.c

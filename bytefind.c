@@ -43,7 +43,7 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size)
                         fputs("\033\13332m", stdout);
                         for(size_t j = 0; j < ind; ++j)
                         {
-                            printf("%02x", bytes[j]);
+                            printf("%02x", bytes[j] & 0xff);
                             ++currcol;
                             if(currcol == cols)
                             {
@@ -53,7 +53,7 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size)
                         }
                         for(size_t j = ind; j < size; ++j)
                         {
-                            printf("%02x", cbuf[j - ind]);
+                            printf("%02x", cbuf[j - ind] & 0xff);
                             ++currcol;
                             if(currcol == cols)
                             {
@@ -71,7 +71,7 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size)
                 {
                     for(size_t j = 0; j < ind; ++j)
                     {
-                        printf("%02x", bytes[j]);
+                        printf("%02x", bytes[j] & 0xff);
                         ++currcol;
                         if(currcol == cols)
                         {
@@ -98,7 +98,7 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size)
                         fputs("\033\13332m", stdout);
                         for(size_t j = 0; eq && j < size; ++j)
                         {
-                            printf("%02x", cbuf[i + j]);
+                            printf("%02x", cbuf[i + j] & 0xff);
                             ++currcol;
                             if(currcol == cols)
                             {
@@ -114,7 +114,7 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size)
                 }
                 else if(ind == 0 && realdev)
                 {
-                    printf("%02x", cbuf[i]);
+                    printf("%02x", cbuf[i] & 0xff);
                     ++currcol;
                     if(currcol == cols)
                     {
