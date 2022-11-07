@@ -10,6 +10,6 @@
 #ifndef Included_bytefind_h
 #define Included_bytefind_h
 #include<stddef.h>
-int bytefind(const char *fname, size_t cols, const char *bytes, size_t size);
-int bytereplace(const char *fname, const char *search, const char *replace, size_t ssize, size_t rsize);
+int bytefind(const char *fname, size_t cols, const char *bytes, size_t size, long unsigned off, long unsigned len);
+int bytereplace(const char *fname, const char *search, const char *replace, size_t ssize, size_t rsize, long unsigned off, long unsigned len);
 #endif

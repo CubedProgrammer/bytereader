@@ -14,7 +14,7 @@
 #define FINDBUFSZ 16384
 #endif
 #define ISINTERACTIVE isatty(STDOUT_FILENO)
-int bytefind(const char *fname, size_t cols, const char *bytes, size_t size)
+int bytefind(const char *fname, size_t cols, const char *bytes, size_t size, long unsigned off, long unsigned len)
 {
     FILE *fh = fopen(fname, "rb");
     int succ = 0;
@@ -22,14 +22,18 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size)
     if(fh != NULL)
     {
         char cbuf[FINDBUFSZ];
-        size_t ind = 0, bc;
-        size_t before = 0, start = 0, currcol = 0;
+        size_t ind = 0, bc, bneed;
+        size_t before = off, start = 0, currcol = 0;
         char eq;
+        fseek(fh, off, SEEK_CUR);
         if(realdev)
             printf("Searching %s...\n", fname);
-        while(!feof(fh))
+        while(!feof(fh) && before < off + len)
         {
-            bc = fread(cbuf, 1, sizeof(cbuf), fh);
+            bneed = sizeof cbuf;
+            if(before + bneed > off + len)
+                bneed = off + len - before;
+            bc = fread(cbuf, 1, bneed, fh);
             start = 0;
             if(ind)
             {
@@ -88,7 +92,7 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size)
                 for(size_t j = 0; eq && j < size; ++j)
                 {
                     eq = bytes[j] == cbuf[i + j];
-                    if(eq && i + j == bc - 1)
+                    if(eq && i + j == bc - 1 && j + 1 < size)
                         ind = j + 1, eq = 0;
                 }
                 if(eq)
@@ -135,7 +139,7 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size)
     return succ;
 }
 
-int bytereplace(const char *fname, const char *search, const char *replace, size_t ssize, size_t rsize)
+int bytereplace(const char *fname, const char *search, const char *replace, size_t ssize, size_t rsize, long unsigned off, long unsigned len)
 {
     int succ = 0;
     FILE *fh = fopen(fname, "rb+"), *ofh;
@@ -152,13 +156,31 @@ int bytereplace(const char *fname, const char *search, const char *replace, size
     if(fh != NULL)
     {
         char cbuf[FINDBUFSZ];
-        size_t ind = 0, bc;
-        size_t before = 0, start = 0;
+        size_t ind = 0, bc, bneed;
+        size_t before = off, start = 0;
         long pos, oldpos;
         char eq;
-        while(!feof(fh))
+        if(ssize != rsize)
         {
-            bc = fread(cbuf, 1, sizeof(cbuf), fh);
+            before = 0;
+            for(; before < off; before += bc)
+            {
+                bneed = sizeof cbuf;
+                if(bneed + before > off)
+                    bneed = off - before;
+                bc = fread(cbuf, 1, bneed, fh);
+                fwrite(cbuf, 1, bc, ofh);
+            }
+            before = off;
+        }
+        else
+            fseek(fh, off, SEEK_CUR);
+        while(!feof(fh) && before < off + len)
+        {
+            bneed = sizeof cbuf;
+            if(before + bneed > off + len)
+                bneed = off + len - before;
+            bc = fread(cbuf, 1, bneed, fh);
             start = 0;
             if(ind)
             {
@@ -188,7 +210,7 @@ int bytereplace(const char *fname, const char *search, const char *replace, size
                 for(size_t j = 0; eq && j < ssize; ++j)
                 {
                     eq = search[j] == cbuf[i + j];
-                    if(eq && i + j == bc - 1)
+                    if(eq && i + j == bc - 1 && j + 1 < ssize)
                         ind = j + 1, eq = 0;
                 }
                 if(eq)
@@ -208,6 +230,15 @@ int bytereplace(const char *fname, const char *search, const char *replace, size
                     fputc(cbuf[i], ofh);
             }
             before += bc;
+        }
+        if(ssize != rsize)
+        {
+            while(!feof(fh))
+            {
+                bneed = sizeof cbuf;
+                bc = fread(cbuf, 1, bneed, fh);
+                fwrite(cbuf, 1, bc, ofh);
+            }
         }
         fclose(fh);
         if(ssize != rsize)

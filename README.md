@@ -2,7 +2,7 @@
 ## Features
 Certain features can be included by defining the right macros and also compiling the right files.
 
-For gcc and clang, to define a macro XYZ, use the -DXYZ command line option. For MSVC, /DXYZ should do.
+For gcc and clang, to define a macro XYZ, use the -DXYZ command line option.
 ### Search and Replace
 Compilation macro:
 ```
