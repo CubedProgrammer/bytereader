@@ -12,14 +12,10 @@
 #include<stdlib.h>
 #include<string.h>
 #include<unistd.h>
+#include"bytereader.h"
 #ifdef BYTEREADER_SEARCH_REPLACE
 #include"bytefind.h"
 #endif
-#define ALTERNATE_COLOURS 01
-#define OFFSET 02
-#define SPACE_BYTES 04
-#define MASK_NUM(n, m)((n) & (m))
-#define ISINTERACTIVE isatty(STDOUT_FILENO)
 
 unsigned readbytes(const char *fname, int bpl, short mode, long unsigned off, long unsigned len)
 {
@@ -28,6 +24,9 @@ unsigned readbytes(const char *fname, int bpl, short mode, long unsigned off, lo
     unsigned rd = 0, tmp = 0;
     char y = 0;
     FILE *fh = fopen(fname, "rb");
+    char bytefmt[] = "%02x";
+    if(MASK_NUM(mode, CAPITAL_LETTERS))
+        bytefmt[3] = 'X';
     if(fh != NULL)
     {
         fseek(fh, off, SEEK_SET);
@@ -47,10 +46,7 @@ unsigned readbytes(const char *fname, int bpl, short mode, long unsigned off, lo
                 else
                     fputs("\033\133m", stdout);
             }
-            if(cbuf[j] < 16)
-                printf("0%x", cbuf[j]);
-            else
-                printf("%x", cbuf[j]);
+            printf(bytefmt, cbuf[j]);
             if(!(rd + j + 1 == len || j + 1 == tmp) && MASK_NUM(mode, SPACE_BYTES))
                 putchar(' ');
         }
@@ -85,16 +81,21 @@ int main(int argl, char *argv[])
     int succ = 0;
     if(argl == 1)
     {
-        printf("%s version 1.7\n", *argv);
+        printf("%s version 1.8\n", *argv);
         puts("Specify files to be read, bytes will be printed in hexadecimal.\n\nCommand line options...");
         puts("-a to alternate colours for each byte, easier to read.");
         puts("-b to set the offset, let n be the next argument, the first n bytes will be skipped.");
         puts("-c to set the number of bytes per row.");
         puts("-d to put a space between each byte.");
+        puts("-e to make the letters capital");
+#ifdef BYTEREADER_SEARCH_REPLACE
         puts("-f to search for a sequence of bytes, bytes must be given in hexadecimal.");
+#endif
         puts("-l to set the maximum number of bytes read to the next argument.");
         puts("-n to display byte offset of each row.");
+#ifdef BYTEREADER_SEARCH_REPLACE
         puts("-r to do a search and replace, next two arguments will be the bytes to search for, and to replace.");
+#endif
         puts("Make the replace argument + to erase all occurrences of the sequence of bytes with -r.");
         puts("Output will differ based on if stdout is attached to a real terminal.");
     }
@@ -123,6 +124,9 @@ int main(int argl, char *argv[])
                         search = 1;
                         break;
 #endif
+                    case'e':
+                        mode |= CAPITAL_LETTERS;
+                        break;
                     case'd':
                         mode |= SPACE_BYTES;
                         break;
@@ -185,9 +189,9 @@ int main(int argl, char *argv[])
                     if(search)
                     {
                         if(search == 6)
-                            succ = bytereplace(arg, searchbuf, replbuf, searchlen, repllen, off, len);
+                            succ = bytereplace(mode, arg, searchbuf, replbuf, searchlen, repllen, off, len);
                         else
-                            succ = bytefind(arg, cols, searchbuf, searchlen, off, len);
+                            succ = bytefind(mode, arg, cols, searchbuf, searchlen, off, len);
                     }
                     else
 #endif

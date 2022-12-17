@@ -10,15 +10,19 @@
 #include<stdio.h>
 #include<sys/stat.h>
 #include<unistd.h>
+#include"bytereader.h"
 #ifndef FINDBUFSZ
 #define FINDBUFSZ 16384
 #endif
 #define ISINTERACTIVE isatty(STDOUT_FILENO)
-int bytefind(const char *fname, size_t cols, const char *bytes, size_t size, long unsigned off, long unsigned len)
+int bytefind(short mode, const char *fname, size_t cols, const char *bytes, size_t size, long unsigned off, long unsigned len)
 {
     FILE *fh = fopen(fname, "rb");
     int succ = 0;
     char realdev = ISINTERACTIVE;
+    char bytefmt[] = "%02x";
+    if(MASK_NUM(mode, CAPITAL_LETTERS))
+        bytefmt[3] = 'X';
     if(fh != NULL)
     {
         char cbuf[FINDBUFSZ];
@@ -47,7 +51,7 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size, lon
                         fputs("\033\13332m", stdout);
                         for(size_t j = 0; j < ind; ++j)
                         {
-                            printf("%02x", bytes[j] & 0xff);
+                            printf(bytefmt, bytes[j] & 0xff);
                             ++currcol;
                             if(currcol == cols)
                             {
@@ -57,7 +61,7 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size, lon
                         }
                         for(size_t j = ind; j < size; ++j)
                         {
-                            printf("%02x", cbuf[j - ind] & 0xff);
+                            printf(bytefmt, cbuf[j - ind] & 0xff);
                             ++currcol;
                             if(currcol == cols)
                             {
@@ -75,7 +79,7 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size, lon
                 {
                     for(size_t j = 0; j < ind; ++j)
                     {
-                        printf("%02x", bytes[j] & 0xff);
+                        printf(bytefmt, bytes[j] & 0xff);
                         ++currcol;
                         if(currcol == cols)
                         {
@@ -102,7 +106,7 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size, lon
                         fputs("\033\13332m", stdout);
                         for(size_t j = 0; eq && j < size; ++j)
                         {
-                            printf("%02x", cbuf[i + j] & 0xff);
+                            printf(bytefmt, cbuf[i + j] & 0xff);
                             ++currcol;
                             if(currcol == cols)
                             {
@@ -118,7 +122,7 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size, lon
                 }
                 else if(ind == 0 && realdev)
                 {
-                    printf("%02x", cbuf[i] & 0xff);
+                    printf(bytefmt, cbuf[i] & 0xff);
                     ++currcol;
                     if(currcol == cols)
                     {
@@ -139,13 +143,16 @@ int bytefind(const char *fname, size_t cols, const char *bytes, size_t size, lon
     return succ;
 }
 
-int bytereplace(const char *fname, const char *search, const char *replace, size_t ssize, size_t rsize, long unsigned off, long unsigned len)
+int bytereplace(short mode, const char *fname, const char *search, const char *replace, size_t ssize, size_t rsize, long unsigned off, long unsigned len)
 {
     int succ = 0;
     FILE *fh = fopen(fname, "rb+"), *ofh;
     char tmpname[60];
     char realdev = ISINTERACTIVE;
     struct stat fdat;
+    char bytefmt[] = "%02x";
+    if(MASK_NUM(mode, CAPITAL_LETTERS))
+        bytefmt[3] = 'X';
     if(ssize == rsize)
         ofh = fh;
     else
