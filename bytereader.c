@@ -81,7 +81,7 @@ int main(int argl, char *argv[])
     int succ = 0;
     if(argl == 1)
     {
-        printf("%s version 1.8\n", *argv);
+        printf("%s version 1.8.1\n", *argv);
         puts("Specify files to be read, bytes will be printed in hexadecimal.\n\nCommand line options...");
         puts("-a to alternate colours for each byte, easier to read.");
         puts("-b to set the offset, let n be the next argument, the first n bytes will be skipped.");

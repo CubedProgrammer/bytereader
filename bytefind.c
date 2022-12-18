@@ -58,6 +58,8 @@ int bytefind(short mode, const char *fname, size_t cols, const char *bytes, size
                                 putchar('\n');
                                 currcol = 0;
                             }
+                            else if(MASK_NUM(mode, SPACE_BYTES))
+                                putchar(' ');
                         }
                         for(size_t j = ind; j < size; ++j)
                         {
@@ -68,6 +70,8 @@ int bytefind(short mode, const char *fname, size_t cols, const char *bytes, size
                                 putchar('\n');
                                 currcol = 0;
                             }
+                            else if(MASK_NUM(mode, SPACE_BYTES))
+                                putchar(' ');
                         }
                         fputs("\033\133m", stdout);
                     }
@@ -86,6 +90,8 @@ int bytefind(short mode, const char *fname, size_t cols, const char *bytes, size
                             putchar('\n');
                             currcol = 0;
                         }
+                        else if(MASK_NUM(mode, SPACE_BYTES))
+                            putchar(' ');
                     }
                 }
                 ind = 0;
@@ -113,6 +119,8 @@ int bytefind(short mode, const char *fname, size_t cols, const char *bytes, size
                                 putchar('\n');
                                 currcol = 0;
                             }
+                            else if(MASK_NUM(mode, SPACE_BYTES))
+                                putchar(' ');
                         }
                         fputs("\033\133m", stdout);
                     }
@@ -129,6 +137,8 @@ int bytefind(short mode, const char *fname, size_t cols, const char *bytes, size
                         putchar('\n');
                         currcol = 0;
                     }
+                    else if(MASK_NUM(mode, SPACE_BYTES))
+                        putchar(' ');
                 }
             }
             start = 0;
