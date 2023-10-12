@@ -16,6 +16,17 @@
 #include"bytefind.h"
 #endif
 
+void readskip(FILE *f, long unsigned cnt)
+{
+    char cbuf[16384];
+    long unsigned last, request;
+    for(long unsigned skipped = 0; skipped < cnt; skipped += last)
+    {
+        request = skipped + sizeof(cbuf) < cnt ? sizeof(cbuf) : cnt - skipped;
+        last = fread(cbuf, 1, request, f);
+    }
+}
+
 FILE *openfile(const char *name, const char *mode)
 {
     if(name[0] == '-' && name[1] == '\0')
@@ -36,7 +47,10 @@ unsigned readbytes(const char *fname, int bpl, short mode, long unsigned off, lo
         bytefmt[3] = 'X';
     if(fh != NULL)
     {
-        fseek(fh, off, SEEK_SET);
+        if(fh == stdin)
+            readskip(fh, off);
+        else
+            fseek(fh, off, SEEK_SET);
         tmp = fread(cbuf, 1, bpl, fh);
     }
     while(tmp && rd < len)
@@ -83,12 +97,12 @@ int main(int argl, char *argv[])
     size_t searchlen, repllen;
     char argtype = 0, search = 0;
     short mode = 0;
-    long unsigned off = 0, len = 0xffffffff;
+    long unsigned off = 0, len = 0xffffffffffffffff;
     unsigned cols = 64;
     int succ = 0;
     if(argl == 1)
     {
-        printf("%s version 1.8.2\n", *argv);
+        printf("%s version 1.8.3\n", *argv);
         puts("Specify files to be read, bytes will be printed in hexadecimal.\n\nCommand line options...");
         puts("-a to alternate colours for each byte, easier to read.");
         puts("-b to set the offset, let n be the next argument, the first n bytes will be skipped.");

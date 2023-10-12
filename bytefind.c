@@ -29,7 +29,10 @@ int bytefind(short mode, const char *fname, size_t cols, const char *bytes, size
         size_t ind = 0, bc, bneed;
         size_t before = off, start = 0, currcol = 0;
         char eq;
-        fseek(fh, off, SEEK_CUR);
+        if(fh == stdin)
+            readskip(fh, off);
+        else
+            fseek(fh, off, SEEK_CUR);
         if(realdev)
             printf("Searching %s...\n", fname);
         while(!feof(fh) && before < off + len)
@@ -193,7 +196,12 @@ int bytereplace(short mode, const char *fname, const char *search, const char *r
             before = off;
         }
         else
-            fseek(fh, off, SEEK_CUR);
+        {
+            if(fh == stdin)
+                readskip(fh, off);
+            else
+                fseek(fh, off, SEEK_CUR);
+        }
         while(!feof(fh) && before < off + len)
         {
             bneed = sizeof cbuf;

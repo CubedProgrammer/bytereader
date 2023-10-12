@@ -16,5 +16,6 @@
 #define CAPITAL_LETTERS 010
 #define MASK_NUM(n, m)((n) & (m))
 #define ISINTERACTIVE isatty(STDOUT_FILENO)
+void readskip(FILE *f, long unsigned cnt);
 FILE *openfile(const char *name, const char *mode);
 #endif
