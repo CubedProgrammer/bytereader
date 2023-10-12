@@ -40,3 +40,8 @@ alias bread='bytereader -a'
 alias bfind='bytereader -f'
 alias brepl='bytereader -r'
 ```
+Specify files to read or search, - means standard input and standard output.
+```
+bytereader -a -
+```
+Alternate colours, read from stdin.

@@ -8,7 +8,6 @@
 // You should have received a copy of the GNU General Public License along with /CubedProgrammer/bytereader. If not, see <https://www.gnu.org/licenses/>.
 
 #include<ctype.h>
-#include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
 #include<unistd.h>
@@ -17,13 +16,21 @@
 #include"bytefind.h"
 #endif
 
+FILE *openfile(const char *name, const char *mode)
+{
+    if(name[0] == '-' && name[1] == '\0')
+        return mode[0] == 'r' ? stdin : stdout;
+    else
+        return fopen(name, mode);
+}
+
 unsigned readbytes(const char *fname, int bpl, short mode, long unsigned off, long unsigned len)
 {
     // up to 256 bytes per line
     char unsigned cbuf[256];
     unsigned rd = 0, tmp = 0;
     char y = 0;
-    FILE *fh = fopen(fname, "rb");
+    FILE *fh = openfile(fname, "rb");
     char bytefmt[] = "%02x";
     if(MASK_NUM(mode, CAPITAL_LETTERS))
         bytefmt[3] = 'X';
@@ -81,7 +88,7 @@ int main(int argl, char *argv[])
     int succ = 0;
     if(argl == 1)
     {
-        printf("%s version 1.8.1\n", *argv);
+        printf("%s version 1.8.2\n", *argv);
         puts("Specify files to be read, bytes will be printed in hexadecimal.\n\nCommand line options...");
         puts("-a to alternate colours for each byte, easier to read.");
         puts("-b to set the offset, let n be the next argument, the first n bytes will be skipped.");
@@ -102,7 +109,7 @@ int main(int argl, char *argv[])
     for(int i = 1; i < argl; ++i)
     {
         arg = argv[i];
-        if(*arg == '-')
+        if(*arg == '-' && arg[1])
         {
             for(const char *it = arg + 1; *it != '\0'; ++it)
             {

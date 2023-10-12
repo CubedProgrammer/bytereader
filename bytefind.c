@@ -17,7 +17,7 @@
 #define ISINTERACTIVE isatty(STDOUT_FILENO)
 int bytefind(short mode, const char *fname, size_t cols, const char *bytes, size_t size, long unsigned off, long unsigned len)
 {
-    FILE *fh = fopen(fname, "rb");
+    FILE *fh = openfile(fname, "rb");
     int succ = 0;
     char realdev = ISINTERACTIVE;
     char bytefmt[] = "%02x";
@@ -156,19 +156,21 @@ int bytefind(short mode, const char *fname, size_t cols, const char *bytes, size
 int bytereplace(short mode, const char *fname, const char *search, const char *replace, size_t ssize, size_t rsize, long unsigned off, long unsigned len)
 {
     int succ = 0;
-    FILE *fh = fopen(fname, "rb+"), *ofh;
+    FILE *fh = openfile(fname, "rb+"), *ofh;
     char tmpname[60];
     char realdev = ISINTERACTIVE;
     struct stat fdat;
     char bytefmt[] = "%02x";
     if(MASK_NUM(mode, CAPITAL_LETTERS))
         bytefmt[3] = 'X';
-    if(ssize == rsize)
+    if(fh == stdin)
+        ofh = stdout;
+    else if(ssize == rsize)
         ofh = fh;
     else
     {
         sprintf(tmpname, "bytereader-tmp-%d", getpid());
-        ofh = fopen(tmpname, "wb");
+        ofh = openfile(tmpname, "wb");
     }
     if(fh != NULL)
     {
@@ -258,7 +260,7 @@ int bytereplace(short mode, const char *fname, const char *search, const char *r
             }
         }
         fclose(fh);
-        if(ssize != rsize)
+        if(ssize != rsize && fh != stdin)
         {
             fclose(ofh);
             stat(fname, &fdat);
