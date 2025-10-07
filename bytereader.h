@@ -14,6 +14,7 @@
 #define OFFSET 02
 #define SPACE_BYTES 04
 #define CAPITAL_LETTERS 010
+#define CHARACTERS 020
 #define MASK_NUM(n, m)((n) & (m))
 #define ISINTERACTIVE isatty(STDOUT_FILENO)
 void readskip(FILE *f, long unsigned cnt);

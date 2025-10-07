@@ -67,7 +67,10 @@ unsigned readbytes(const char *fname, int bpl, short mode, long unsigned off, lo
                 else
                     fputs("\033\133m", stdout);
             }
-            printf(bytefmt, cbuf[j]);
+            if(MASK_NUM(mode, CHARACTERS) && cbuf[j] > 32 && cbuf[j] < 127)
+                printf(" %c", cbuf[j]);
+            else
+                printf(bytefmt, cbuf[j]);
             if(!(rd + j + 1 == len || j + 1 == tmp) && MASK_NUM(mode, SPACE_BYTES))
                 putchar(' ');
         }
@@ -102,7 +105,7 @@ int main(int argl, char *argv[])
     int succ = 0;
     if(argl == 1)
     {
-        printf("%s version 1.8.3\n", *argv);
+        printf("%s version 1.9\n", *argv);
         puts("Specify files to be read, bytes will be printed in hexadecimal.\n\nCommand line options...");
         puts("-a to alternate colours for each byte, easier to read.");
         puts("-b to set the offset, let n be the next argument, the first n bytes will be skipped.");
@@ -112,6 +115,7 @@ int main(int argl, char *argv[])
 #ifdef BYTEREADER_SEARCH_REPLACE
         puts("-f to search for a sequence of bytes, bytes must be given in hexadecimal.");
 #endif
+        puts("-g to show bytes that have an ASCII character");
         puts("-l to set the maximum number of bytes read to the next argument.");
         puts("-n to display byte offset of each row.");
 #ifdef BYTEREADER_SEARCH_REPLACE
@@ -139,6 +143,9 @@ int main(int argl, char *argv[])
                         break;
                     case'l':
                         argtype = 3;
+                        break;
+                    case'g':
+                        mode |= CHARACTERS;
                         break;
 #ifdef BYTEREADER_SEARCH_REPLACE
                     case'f':
